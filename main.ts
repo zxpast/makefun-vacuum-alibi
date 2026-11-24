@@ -40,7 +40,10 @@ const LINE =
 
 const DEST = join(OUTPUT_DIR, 'entry.txt');
 
-// Gate: one line, 1-200 characters, not only whitespace.
+// Gate: one line, 1-200 characters (the competition's one-line cap),
+// not only whitespace, and no embedded newline. Failing early here
+// is cheaper than writing a bad entry and only finding out at the
+// read-back verify below.
 if (LINE.length < 1 || LINE.length > 200) {
   console.error(`entry line is ${LINE.length} characters, outside 1-200`);
   process.exit(1);
@@ -59,7 +62,10 @@ try {
 }
 
 // Read the file back: the gate reads exactly these bytes, so a short or
-// mangled write must fail here rather than ship a broken entry.
+// mangled write must fail here rather than ship a broken entry. The
+// comparison is byte-exact on purpose — one stray character, a missing
+// newline, or a silent encoding change all fail loudly instead of
+// submitting an entry that is not the line we gated above.
 let back: string;
 try {
   back = readFileSync(DEST, 'utf8');
